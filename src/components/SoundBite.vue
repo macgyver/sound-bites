@@ -39,7 +39,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 		tabindex="0"
 		@focus="emit('select-word')"
 	>
-		<span class="clue">{{ clue }}</span>
+		<label class="clue">{{ clue }}</label>
 		<span class="answer">
 			<span
 				class="letter"
@@ -58,7 +58,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 
 <style scoped>
 .sound-bite {
-	display: flex;
+	/* display: flex; */
 	--girth: 2px;
 	font-size: 2rem;
 
@@ -66,19 +66,27 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	&:focus-visible {
 		outline: none;
 	}
+	/* margin-top: 1.2em; */
+}
+
+.clue {
+	line-height: 1.2;
 }
 
 .answer {
 	display: flex;
+	gap: 0.1em;
+	margin-left: auto;
 }
 
 .letter {
 	.selected & {
-		background-color: cyan;
+		/* background-color: cyan; */
 	}
 
 	&.selected {
-		background-color: fuchsia;
+		outline: 2px solid cyan;
+		outline-offset: 2px;
 	}
 
 	height: 3rem;
