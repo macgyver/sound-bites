@@ -61,6 +61,11 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	display: flex;
 	--girth: 2px;
 	font-size: 2rem;
+
+	/* don't worry we will make it real obvious which is the active one */
+	&:focus-visible {
+		outline: none;
+	}
 }
 
 .answer {
