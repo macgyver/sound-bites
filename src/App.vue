@@ -222,7 +222,7 @@ main {
 }
 
 .bite {
-	border: 2px solid black;
+	border: 2px solid var(--color-text);
 	flex-basis: 3rem;
 	aspect-ratio: 1;
 	border-radius: 50%;
@@ -244,7 +244,9 @@ main {
 	width: 9em;
 	max-width: 100%;
 	margin-top: 1.5rem;
-	border: 2px solid black;
+	border: 2px solid var(--color-text);
+	background: var(--color-background);
+	color: var(--color-foreground);
 }
 
 .answer:focus-visible {

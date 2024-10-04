@@ -72,6 +72,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	/* display: flex; */
 	--girth: 2px;
 	font-size: min(10vw, 2rem);
+	/* color: var(--color-text); */
 
 	/* don't worry we will make it real obvious which is the active one */
 	&:focus-visible {
@@ -103,7 +104,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 
 	flex-basis: 3rem; /* right now each will shrink only as much as it needs to but maybe they should all shrink equally?  one solution would be to pad each word with blank els to match the length of the longest word */
 	aspect-ratio: 1;
-	border: var(--girth) solid black;
+	border: var(--girth) solid var(--color-text);
 	position: relative;
 	text-transform: uppercase;
 	line-height: 1;
@@ -124,7 +125,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 		bottom: calc(-0.9 * var(--girth));
 		right: calc(-0.9 * var(--girth));
 		left: calc(-0.9 * var(--girth));
-		border: var(--girth) solid black;
+		border: var(--girth) solid var(--color-text);
 		border-radius: 50%;
 	}
 }
