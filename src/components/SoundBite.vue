@@ -1,4 +1,5 @@
 <script setup>
+// todo: this component should be called "HookWord" and the SoundBite is the circled section
 import { defineProps, defineEmits, ref, reactive, watch } from 'vue'
 
 let props = defineProps({
@@ -93,12 +94,8 @@ let emit = defineEmits(['select-word', 'select-letter'])
 }
 
 .letter {
-	.selected & {
-		/* background-color: cyan; */
-	}
-
 	&.selected {
-		outline: 2px solid cyan;
+		outline: 2px solid var(--color-accent);
 		outline-offset: 2px;
 	}
 

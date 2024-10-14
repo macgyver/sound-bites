@@ -5,7 +5,7 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-	base: process.env.NODE_ENV === 'production' ? '/sound-bites/' : '/',
+	base: '/sound-bites/', // this must be the same as the repository name for deployment to gh-pages
 	plugins: [vue()],
 	resolve: {
 		alias: {

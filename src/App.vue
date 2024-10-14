@@ -10,57 +10,65 @@ const BITE_ARGS = 2 // the ".slice" args for the answer's substring that is the 
 // 1. only fill out bites if the whole word is correct
 // 2. add sound files to correct words to clarify pronunciation
 
-// this will come from server or something
-let data = (function () {
-	let url = new URL(location.href)
-	switch (url.searchParams.get('q')) {
-		case '1':
-			return [
-				[['folksy medicine accompaniment', 'sweet crystal'], 'sugar', [0, 1]],
-				[['discreet', 'cautious'], 'careful', [5, 6]],
-				[['teach', 'place of learning'], 'school', [1, 3]],
-				['ʃʊk', 'shook'],
-			]
-		default:
-			return [
-				[['plot points', 'visualization of data'], 'graph', [3, 4]],
-				[['artist’s hot spot', 'potter’s need'], 'kiln', [0, 1]],
-				[['consider (as options)', 'take the measure of'], 'weigh', [1, 5]],
-				[
-					['Ancient Greek drama critics?', 'group of singers'],
-					'chorus',
-					[0, 2],
-				],
-				['fleɪk', 'flake'],
-			]
+let days = [
+	{
+		name: 'Day One',
+		url: '?q=1',
 		// the format:
 		// 		return [
-		// 				[['clue', 'alternate clue'], 'word', [sliceStartIndex, sliceIndexEnd]],
+		// 				[['clue', 'alternate clue'], 'hook', [sliceStartIndex, sliceIndexEnd]],
 		//				""
 		//				""
 		//				['ipa transcription', 'solution / translation'] (when you put the bytes together you get the "gloss"
 		// 			]
-	}
-})()
 
-let clues = data.slice(0, -1)
+		data: [
+			[['folksy medicine accompaniment', 'sweet crystal'], 'sugar', [0, 1]],
+			[['discreet', 'cautious'], 'careful', [5, 6]],
+			[['teach', 'place of learning'], 'school', [1, 3]],
+			['ʃʊk', 'shook'],
+		],
+	},
+	{
+		name: 'Day Two',
+		url: '?q=2',
+		data: [
+			[['plot points', 'visualization of data'], 'graph', [3, 5]],
+			[['artist’s hot spot', 'potter’s need'], 'kiln', [2, 3]],
+			[['consider (as options)', 'take the measure of'], 'weigh', [1, 5]],
+			[['Ancient Greek drama critics?', 'group of singers'], 'chorus', [0, 2]],
+			['fleɪk', 'flake'],
+		],
+	},
+]
 
-let [ipa, solution] = data.at(-1)
+let url = new URL(location.href)
+let activeDay = ref(Number.parseInt(url.searchParams.get('q')) || 1)
 
-let bites = clues
-	.map(([, , bites]) => bites)
-	.reduce((x, [a, b]) => x + b - a, 0) // sum of bite lengths
-let answers = clues.map(([, clue]) => clue)
-let longest = Math.max(
-	bites,
-	...clues.map(([, answer]) => answer.length), // length of answers
+// this will come from server or something
+let data = computed(() => days[activeDay.value - 1].data)
+
+let clues = computed(() => data.value.slice(0, -1))
+
+let ipa = computed(() => data.value.at(-1)[0])
+let solution = computed(() => data.value.at(-1)[1])
+
+let bites = computed(() =>
+	clues.value.map(([, , bites]) => bites).reduce((x, [a, b]) => x + b - a, 0),
+) // sum of bite lengths
+let answers = computed(() => clues.value.map(([, clue]) => clue))
+let longest = computed(() =>
+	Math.max(
+		bites.value,
+		...clues.value.map(([, answer]) => answer.length), // length of answers
+	),
 )
 
-let guesses = reactive(
-	clues.map(([, answer]) => new Array(answer.length).fill(' ')),
+let hooks = computed(() =>
+	clues.value.map(([, answer]) => new Array(answer.length).fill(' ')),
 )
 
-let selectedGuess = computed(() => guesses[selectedWordIndex.value])
+let selectedHook = computed(() => hooks.value[selectedWordIndex.value])
 
 let clueEls = ref([])
 
@@ -68,12 +76,14 @@ let selectedWordIndex = ref(0)
 let selectedLetterIndex = ref(0)
 
 watch(selectedWordIndex, (index) => {
-	if (index < 0) selectedWordIndex.value = clues.length - 1
-	if (index >= clues.length) selectedWordIndex.value = 0
+	if (index < 0) selectedWordIndex.value = clues.value.length - 1
+	if (index >= clues.value.length) selectedWordIndex.value = 0
 	selectedLetterIndex.value =
-		selectedGuess.value.findIndex((letter) => letter === ' ') || 0
+		selectedHook.value?.findIndex((letter) => letter === ' ') || 0
 })
-let selectedWord = computed(() => clues[selectedWordIndex.value][ANSWER_INDEX])
+let selectedWord = computed(
+	() => clues.value[selectedWordIndex.value][ANSWER_INDEX],
+)
 
 watch(selectedLetterIndex, (index, oldIndex) => {
 	if (index < 0) selectedLetterIndex.value = selectedWord.value.length - 1
@@ -81,7 +91,7 @@ watch(selectedLetterIndex, (index, oldIndex) => {
 	if (
 		index === 0 &&
 		oldIndex !== 1 &&
-		!selectedGuess.value.some((char) => char === ' ')
+		!selectedHook.value?.some((char) => char === ' ')
 	) {
 		// let nextIncompleteWordIndex =
 		// todo: advance to the next blank space in the next word, if there is one, or to the final input if not
@@ -92,27 +102,35 @@ watch(selectedLetterIndex, (index, oldIndex) => {
 function handleDelete() {
 	if (
 		selectedLetterIndex.value > 0 &&
-		selectedGuess.value[selectedLetterIndex.value] === ' '
+		selectedHook.value?.[selectedLetterIndex.value] === ' '
 	) {
-		// they probably wanted to delete the previous letter
-		selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
+		// if they're on a blank space, they probably wanted to delete the previous letter
+		selectedHook.value.splice(selectedLetterIndex.value - 1, 1, ' ')
 		selectedLetterIndex.value -= 1
 	} else {
-		// delete the current letter and stay where we are.
-		guesses[selectedWordIndex.value].splice(selectedLetterIndex.value, 1, ' ')
+		// else delete the current letter and stay where we are.
+		hooks.value[selectedWordIndex.value].splice(
+			selectedLetterIndex.value,
+			1,
+			' ',
+		)
 	}
 }
 
 function handleInput(e) {
 	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
-	guesses[selectedWordIndex.value].splice(selectedLetterIndex.value, 1, e.key)
+	hooks.value[selectedWordIndex.value].splice(
+		selectedLetterIndex.value,
+		1,
+		e.key,
+	)
 	selectedLetterIndex.value += 1
 }
 
 let answer = ref('')
 async function checkAnswer() {
-	if (answer.value.toLowerCase() === solution.toLowerCase()) {
-		console.debug(ipa)
+	if (answer.value.toLowerCase() === solution.value.toLowerCase()) {
+		console.debug(ipa.value)
 		await nextTick()
 		alert('You win!')
 	}
@@ -124,7 +142,19 @@ let difficulty = ref(0)
 <template>
 	<header>
 		<h1 style="display: inline-block">Sound Bites</h1>
-		<span>
+		<span class="days">
+			<a
+				v-for="(day, i) in days"
+				:key="i"
+				tabindex="0"
+				:href="day.url"
+				:class="{ day: true, active: activeDay === i + 1 }"
+				@click.prevent="activeDay = i + 1"
+			>
+				{{ day.name }}
+			</a>
+		</span>
+		<span class="difficulty">
 			<label>
 				<input type="radio" name="difficulty" v-model="difficulty" :value="0" />
 				hard
@@ -154,7 +184,7 @@ let difficulty = ref(0)
 				:clue="clue[difficulty]"
 				:answer="answer"
 				:bites="bites"
-				:guess="guesses[index]"
+				:guess="hooks[index]"
 				:selected="selectedWordIndex === index"
 				:selected-letter-index="selectedLetterIndex"
 				@select-word="selectedWordIndex = index"
@@ -170,8 +200,8 @@ let difficulty = ref(0)
 					class="bite"
 					v-for="(letter, index) in clues
 						.map(([, , bites], index) => {
-							if (guesses[index].join('') === answers[index])
-								return guesses[index].slice(bites[0], bites[1]).join('')
+							if (hooks[index].join('') === answers[index])
+								return hooks[index].slice(bites[0], bites[1]).join('')
 							else return new Array(bites[1] - bites[0]).fill(' ').join('')
 						})
 						.join('')"
@@ -192,6 +222,7 @@ let difficulty = ref(0)
 </template>
 
 <style scoped>
+/* todo: make letters not change size when they are filled in */
 main {
 	margin-top: 1rem;
 	display: flex;
@@ -251,7 +282,12 @@ main {
 
 .answer:focus-visible {
 	border-radius: 1px;
-	outline: 2px solid cyan;
+	outline: 2px solid var(--color--accent);
 	outline-offset: 2px;
+}
+
+.days {
+	display: inline-flex;
+	gap: 0.7em;
 }
 </style>
