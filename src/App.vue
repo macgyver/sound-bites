@@ -1,46 +1,11 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import SoundBite from './components/SoundBite.vue'
-
-const CLUE_INDEX = 0
-const ANSWER_INDEX = 1
-const BITE_ARGS = 2 // the ".slice" args for the answer's substring that is the sound bite
+import { days, ANSWER_INDEX } from './data.js'
 
 // todo:
 // 1. only fill out bites if the whole word is correct
 // 2. add sound files to correct words to clarify pronunciation
-
-let days = [
-	{
-		name: 'Day One',
-		url: '?q=1',
-		// the format:
-		// 		return [
-		// 				[['clue', 'alternate clue'], 'hook', [sliceStartIndex, sliceIndexEnd]],
-		//				""
-		//				""
-		//				['ipa transcription', 'solution / translation'] (when you put the bytes together you get the "gloss"
-		// 			]
-
-		data: [
-			[['folksy medicine accompaniment', 'sweet crystal'], 'sugar', [0, 1]],
-			[['discreet', 'cautious'], 'careful', [5, 6]],
-			[['teach', 'place of learning'], 'school', [1, 3]],
-			['ʃʊk', 'shook'],
-		],
-	},
-	{
-		name: 'Day Two',
-		url: '?q=2',
-		data: [
-			[['plot points', 'visualization of data'], 'graph', [3, 5]],
-			[['artist’s hot spot', 'potter’s need'], 'kiln', [2, 3]],
-			[['consider (as options)', 'take the measure of'], 'weigh', [1, 5]],
-			[['Ancient Greek drama critics?', 'group of singers'], 'chorus', [0, 2]],
-			['fleɪk', 'flake'],
-		],
-	},
-]
 
 let url = new URL(location.href)
 let activeDay = ref(Number.parseInt(url.searchParams.get('q')) || 1)
@@ -64,11 +29,11 @@ let longest = computed(() =>
 	),
 )
 
-let hooks = computed(() =>
+let guesses = computed(() =>
 	clues.value.map(([, answer]) => new Array(answer.length).fill(' ')),
 )
 
-let selectedHook = computed(() => hooks.value[selectedWordIndex.value])
+let selectedGuess = computed(() => guesses.value[selectedWordIndex.value])
 
 let clueEls = ref([])
 
@@ -79,7 +44,7 @@ watch(selectedWordIndex, (index) => {
 	if (index < 0) selectedWordIndex.value = clues.value.length - 1
 	if (index >= clues.value.length) selectedWordIndex.value = 0
 	selectedLetterIndex.value =
-		selectedHook.value?.findIndex((letter) => letter === ' ') || 0
+		selectedGuess.value.findIndex((letter) => letter === ' ') || 0
 })
 let selectedWord = computed(
 	() => clues.value[selectedWordIndex.value][ANSWER_INDEX],
@@ -91,7 +56,7 @@ watch(selectedLetterIndex, (index, oldIndex) => {
 	if (
 		index === 0 &&
 		oldIndex !== 1 &&
-		!selectedHook.value?.some((char) => char === ' ')
+		!selectedGuess.value.some((char) => char === ' ')
 	) {
 		// let nextIncompleteWordIndex =
 		// todo: advance to the next blank space in the next word, if there is one, or to the final input if not
@@ -102,14 +67,14 @@ watch(selectedLetterIndex, (index, oldIndex) => {
 function handleDelete() {
 	if (
 		selectedLetterIndex.value > 0 &&
-		selectedHook.value?.[selectedLetterIndex.value] === ' '
+		selectedGuess.value[selectedLetterIndex.value] === ' '
 	) {
 		// if they're on a blank space, they probably wanted to delete the previous letter
-		selectedHook.value.splice(selectedLetterIndex.value - 1, 1, ' ')
+		selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
 		selectedLetterIndex.value -= 1
 	} else {
 		// else delete the current letter and stay where we are.
-		hooks.value[selectedWordIndex.value].splice(
+		guesses.value[selectedWordIndex.value].splice(
 			selectedLetterIndex.value,
 			1,
 			' ',
@@ -119,7 +84,7 @@ function handleDelete() {
 
 function handleInput(e) {
 	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
-	hooks.value[selectedWordIndex.value].splice(
+	guesses.value[selectedWordIndex.value].splice(
 		selectedLetterIndex.value,
 		1,
 		e.key,
@@ -137,6 +102,14 @@ async function checkAnswer() {
 }
 
 let difficulty = ref(0)
+
+window.addEventListener('popstate', (e) => {
+	activeDay.value = e.state.day
+})
+let go = (day) => {
+	activeDay.value = day
+	history.pushState({ day }, '', `?q=${day}`)
+}
 </script>
 
 <template>
@@ -147,14 +120,14 @@ let difficulty = ref(0)
 				v-for="(day, i) in days"
 				:key="i"
 				tabindex="0"
-				:href="day.url"
+				:href="`?q=${i + 1}`"
 				:class="{ day: true, active: activeDay === i + 1 }"
-				@click.prevent="activeDay = i + 1"
+				@click.prevent="go(i + 1)"
 			>
 				{{ day.name }}
 			</a>
 		</span>
-		<span class="difficulty">
+		<div class="difficulty">
 			<label>
 				<input type="radio" name="difficulty" v-model="difficulty" :value="0" />
 				hard
@@ -163,7 +136,7 @@ let difficulty = ref(0)
 				<input type="radio" name="difficulty" v-model="difficulty" :value="1" />
 				easy
 			</label>
-		</span>
+		</div>
 	</header>
 
 	<main>
@@ -176,6 +149,7 @@ let difficulty = ref(0)
 			@keyup.right="selectedLetterIndex += 1"
 			@keyup.delete="handleDelete"
 			@keyup="handleInput"
+			:inert="false"
 		>
 			<SoundBite
 				v-for="([clue, answer, bites], index) in clues"
@@ -184,7 +158,7 @@ let difficulty = ref(0)
 				:clue="clue[difficulty]"
 				:answer="answer"
 				:bites="bites"
-				:guess="hooks[index]"
+				:guess="guesses[index]"
 				:selected="selectedWordIndex === index"
 				:selected-letter-index="selectedLetterIndex"
 				@select-word="selectedWordIndex = index"
@@ -200,8 +174,8 @@ let difficulty = ref(0)
 					class="bite"
 					v-for="(letter, index) in clues
 						.map(([, , bites], index) => {
-							if (hooks[index].join('') === answers[index])
-								return hooks[index].slice(bites[0], bites[1]).join('')
+							if (guesses[index].join('') === answers[index])
+								return guesses[index].slice(bites[0], bites[1]).join('')
 							else return new Array(bites[1] - bites[0]).fill(' ').join('')
 						})
 						.join('')"
@@ -219,6 +193,14 @@ let difficulty = ref(0)
 			<input v-model="answer" @input="checkAnswer" class="answer" />
 		</div>
 	</main>
+
+	<details class="instructions">
+		<summary>instructions</summary>
+		Each clue hints at a word. Fill in the blanks with the correct letters. The
+		circled letters in each correct word will move over to the final answer.
+		Sound out the circled letters as they are used in each word to reveal the
+		final answer.
+	</details>
 </template>
 
 <style scoped>
@@ -253,14 +235,16 @@ main {
 }
 
 .bite {
-	border: 2px solid var(--color-text);
+	border: 2px solid var(--color-border);
 	flex-basis: 3rem;
 	aspect-ratio: 1;
 	border-radius: 50%;
 	text-transform: uppercase;
-	line-height: 1;
 	align-content: center;
-	padding: 0 0.4em;
+	display: flex;
+	place-content: center;
+	align-content: center;
+	line-height: 1.3;
 	font-size: 2rem;
 
 	&.blank {
@@ -273,9 +257,10 @@ main {
 	text-transform: uppercase;
 	font-size: min(10vw, 2rem);
 	width: 9em;
+	height: 3rem;
 	max-width: 100%;
 	margin-top: 1.5rem;
-	border: 2px solid var(--color-text);
+	border: 2px solid var(--color-border);
 	background: var(--color-background);
 	color: var(--color-foreground);
 }
@@ -287,7 +272,23 @@ main {
 }
 
 .days {
+	margin-left: 1em;
 	display: inline-flex;
-	gap: 0.7em;
+	gap: 1.2em;
+}
+
+.difficulty {
+	display: flex;
+	gap: 1em;
+}
+
+.instructions {
+	position: absolute;
+	bottom: 2rem;
+	right: 2rem;
+	max-width: 20em;
+	border: 1px solid var(--color-border);
+	padding: 1rem;
+	background: #111;
 }
 </style>

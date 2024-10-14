@@ -1,6 +1,7 @@
 :root {
 	--color-text: black;
 	--color-background: white;
+	--color-border: gray;
 	--color-accent: cyan;
 }
 
@@ -8,6 +9,7 @@
 	:root {
 		--color-text: white;
 		--color-background: black;
+		--color-border: lightgray;
 		--color-accent: fuchsia;
 	}
 }
