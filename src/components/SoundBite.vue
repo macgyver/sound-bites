@@ -70,7 +70,6 @@ let emit = defineEmits(['select-word', 'select-letter'])
 
 <style scoped>
 .sound-bite {
-	/* display: flex; */
 	--girth: 2px;
 	font-size: min(10vw, 2rem);
 	/* color: var(--color-text); */
@@ -80,7 +79,6 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	&:focus-visible {
 		outline: none;
 	}
-	/* margin-top: 1.2em; */
 }
 
 .clue {
@@ -92,12 +90,14 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	gap: 0.2rem;
 	margin-left: auto;
 	max-width: 100%;
+	margin-top: 0.4em;
 }
 
 .letter {
 	flex-basis: 3rem; /* right now each will shrink only as much as it needs to but maybe they should all shrink equally?  one solution would be to pad each word with blank els to match the length of the longest word */
 	aspect-ratio: 1;
 	border: var(--girth) solid var(--color-border);
+	background: var(--color-input-bg);
 	position: relative;
 	text-transform: uppercase;
 	line-height: 1;
@@ -107,14 +107,15 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	align-content: center;
 	line-height: 1.3;
 
-	&.selected {
-		outline: 2px solid var(--color-accent);
-		outline-offset: 2px;
-	}
-
 	&.blank {
 		visibility: hidden;
 	}
+}
+
+/* todo: fix this component encapsulation leak someday */
+.bites:not([inert]) .letter.selected {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
 }
 
 .bite {

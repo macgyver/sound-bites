@@ -1,22 +1,53 @@
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { toRaw, ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import SoundBite from './components/SoundBite.vue'
 import { days, ANSWER_INDEX } from './data.js'
 
-// todo:
-// 1. only fill out bites if the whole word is correct
-// 2. add sound files to correct words to clarify pronunciation
+function ucfirst(str) {
+	return str.charAt(0).toUpperCase() + str.slice(1)
+}
+function digitToWord(digit) {
+	switch (digit) {
+		case 0:
+			return 'zero'
+		case 1:
+			return 'one'
+		case 2:
+			return 'two'
+		case 3:
+			return 'three'
+		case 4:
+			return 'four'
+		case 5:
+			return 'five'
+		case 6:
+			return 'six'
+		case 7:
+			return 'seven'
+		case 8:
+			return 'eight'
+		case 9:
+			return 'nine'
+		default:
+			throw new Error('digitToWord: digit must be between 0 and 9')
+	}
+}
 
 let url = new URL(location.href)
 let activeDay = ref(Number.parseInt(url.searchParams.get('q')) || 1)
 
-// this will come from server or something
-let data = computed(() => days[activeDay.value - 1].data)
+let today = computed(() => days[activeDay.value - 1])
 
-let clues = computed(() => data.value.slice(0, -1))
+let clues = computed(() => today.value.slice(0, -1))
 
-let ipa = computed(() => data.value.at(-1)[0])
-let solution = computed(() => data.value.at(-1)[1])
+let ipa = computed(() => today.value.at(-1)[0])
+let solution = computed(() => today.value.at(-1)[1])
+
+let correctBites = computed(() =>
+	clues.value
+		.map(([, answer, bites]) => answer.substring(bites[0], bites[1]))
+		.join(''),
+)
 
 let bites = computed(() =>
 	clues.value.map(([, , bites]) => bites).reduce((x, [a, b]) => x + b - a, 0),
@@ -29,11 +60,26 @@ let longest = computed(() =>
 	),
 )
 
-let guesses = computed(() =>
-	clues.value.map(([, answer]) => new Array(answer.length).fill(' ')),
+let guesses = reactive(
+	days.map((day) => {
+		let clues = day.slice(0, -1)
+		return clues.map(([, answer]) => new Array(answer.length).fill(' '))
+	}),
 )
 
-let selectedGuess = computed(() => guesses.value[selectedWordIndex.value])
+let todaysGuesses = computed(() => guesses[activeDay.value - 1])
+
+let guessedBites = computed(() => {
+	return clues.value
+		.map(([, , bites], index) => {
+			if (todaysGuesses.value[index].join('') === answers.value[index])
+				return todaysGuesses.value[index].slice(bites[0], bites[1]).join('')
+			else return new Array(bites[1] - bites[0]).fill(' ').join('')
+		})
+		.join('')
+})
+
+let selectedGuess = computed(() => todaysGuesses.value[selectedWordIndex.value])
 
 let clueEls = ref([])
 
@@ -46,10 +92,22 @@ watch(selectedWordIndex, (index) => {
 	selectedLetterIndex.value =
 		selectedGuess.value.findIndex((letter) => letter === ' ') || 0
 })
+
+let finalAnswerEl = ref()
+watch(guessedBites, (oldv, newv) => {
+	if (oldv === correctBites.value) {
+		console.debug('final gloss is correct')
+		// selectedWordIndex.value = null
+		// selectedLetterIndex.value = null
+		finalAnswerEl.value.focus()
+	}
+})
+
 let selectedWord = computed(
 	() => clues.value[selectedWordIndex.value][ANSWER_INDEX],
 )
 
+// loop back to start or end of word if we go out of bounds
 watch(selectedLetterIndex, (index, oldIndex) => {
 	if (index < 0) selectedLetterIndex.value = selectedWord.value.length - 1
 	if (index >= selectedWord.value.length) selectedLetterIndex.value = 0
@@ -65,16 +123,19 @@ watch(selectedLetterIndex, (index, oldIndex) => {
 })
 
 function handleDelete() {
-	if (
-		selectedLetterIndex.value > 0 &&
-		selectedGuess.value[selectedLetterIndex.value] === ' '
-	) {
+	if (selectedGuess.value[selectedLetterIndex.value] === ' ') {
 		// if they're on a blank space, they probably wanted to delete the previous letter
-		selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
-		selectedLetterIndex.value -= 1
+		if (selectedLetterIndex.value > 0) {
+			selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
+			selectedLetterIndex.value -= 1
+		} else {
+			selectedWordIndex.value -= 1
+			selectedLetterIndex.value = -1
+			selectedGuess.value.splice(selectedLetterIndex.value, 1, ' ')
+		}
 	} else {
 		// else delete the current letter and stay where we are.
-		guesses.value[selectedWordIndex.value].splice(
+		todaysGuesses.value[selectedWordIndex.value].splice(
 			selectedLetterIndex.value,
 			1,
 			' ',
@@ -84,7 +145,7 @@ function handleDelete() {
 
 function handleInput(e) {
 	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
-	guesses.value[selectedWordIndex.value].splice(
+	todaysGuesses.value[selectedWordIndex.value].splice(
 		selectedLetterIndex.value,
 		1,
 		e.key,
@@ -92,22 +153,41 @@ function handleInput(e) {
 	selectedLetterIndex.value += 1
 }
 
-let answer = ref('')
-async function checkAnswer() {
-	if (answer.value.toLowerCase() === solution.value.toLowerCase()) {
+// this is a mess but it works
+let finalGuesses = days.map(() => '')
+let finalGuess = ref('')
+watch(activeDay, function (newValue, oldValue) {
+	finalGuesses[oldValue - 1] = finalGuess.value // store the old value
+	finalGuess.value = finalGuesses[newValue - 1] // restore/reset the new one
+})
+let finalSolved = computed(
+	() => finalGuess.value.toLowerCase() === solution.value.toLowerCase(),
+)
+console.debug('final guess initially is', finalGuesses[activeDay.value - 1])
+function checkAnswer() {
+	if (finalSolved.value) {
 		console.debug(ipa.value)
-		await nextTick()
-		alert('You win!')
+		setTimeout(() => alert('You win!'), 20)
 	}
 }
 
 let difficulty = ref(0)
 
-window.addEventListener('popstate', (e) => {
-	activeDay.value = e.state.day
-})
-let go = (day) => {
+let bitesEl = ref()
+function goToDay(day) {
 	activeDay.value = day
+	// todoo: could be a nice little improvement to go to the first blank letter  instead
+	selectedLetterIndex.value = 0
+	selectedWordIndex.value = 0
+	bitesEl.value.focus()
+}
+
+window.addEventListener('popstate', (e) => {
+	goToDay(e.state.day)
+})
+
+function go(day) {
+	goToDay(day)
 	history.pushState({ day }, '', `?q=${day}`)
 }
 </script>
@@ -117,14 +197,14 @@ let go = (day) => {
 		<h1 style="display: inline-block">Sound Bites</h1>
 		<span class="days">
 			<a
-				v-for="(day, i) in days"
+				v-for="(data, i) in days"
 				:key="i"
 				tabindex="0"
 				:href="`?q=${i + 1}`"
 				:class="{ day: true, active: activeDay === i + 1 }"
 				@click.prevent="go(i + 1)"
 			>
-				{{ day.name }}
+				Day {{ ucfirst(digitToWord(i + 1)) }}
 			</a>
 		</span>
 		<div class="difficulty">
@@ -149,7 +229,10 @@ let go = (day) => {
 			@keyup.right="selectedLetterIndex += 1"
 			@keyup.delete="handleDelete"
 			@keyup="handleInput"
-			:inert="false"
+			:inert="guessedBites === correctBites"
+			autofocus
+			tabindex="0"
+			ref="bitesEl"
 		>
 			<SoundBite
 				v-for="([clue, answer, bites], index) in clues"
@@ -158,7 +241,7 @@ let go = (day) => {
 				:clue="clue[difficulty]"
 				:answer="answer"
 				:bites="bites"
-				:guess="guesses[index]"
+				:guess="todaysGuesses[index]"
 				:selected="selectedWordIndex === index"
 				:selected-letter-index="selectedLetterIndex"
 				@select-word="selectedWordIndex = index"
@@ -168,17 +251,11 @@ let go = (day) => {
 			/>
 		</div>
 
-		<div class="final">
+		<div class="final" :inert="finalSolved">
 			<div class="clue">
 				<span
 					class="bite"
-					v-for="(letter, index) in clues
-						.map(([, , bites], index) => {
-							if (guesses[index].join('') === answers[index])
-								return guesses[index].slice(bites[0], bites[1]).join('')
-							else return new Array(bites[1] - bites[0]).fill(' ').join('')
-						})
-						.join('')"
+					v-for="(letter, index) in guessedBites"
 					:key="index"
 					>{{ letter }}</span
 				>
@@ -190,7 +267,13 @@ let go = (day) => {
 				>
 				</span>
 			</div>
-			<input v-model="answer" @input="checkAnswer" class="answer" />
+			<input
+				v-model="finalGuess"
+				@input="checkAnswer"
+				class="answer"
+				ref="finalAnswerEl"
+			/>
+			<span v-if="finalSolved" class="prize">🎉</span>
 		</div>
 	</main>
 
@@ -204,7 +287,6 @@ let go = (day) => {
 </template>
 
 <style scoped>
-/* todo: make letters not change size when they are filled in */
 main {
 	margin-top: 1rem;
 	display: flex;
@@ -212,8 +294,6 @@ main {
 	gap: 5rem 2.5rem;
 }
 .final {
-	/* flex-grow: 1; */
-	/* flex-shrink: 0; */
 	margin-left: auto;
 	max-width: 100%;
 	flex: 1;
@@ -223,8 +303,8 @@ main {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 1.2rem;
-	/* margin-right: auto; */
+	gap: 2.5em;
+	margin-top: 0.3em;
 }
 
 .clue {
@@ -236,6 +316,7 @@ main {
 
 .bite {
 	border: 2px solid var(--color-border);
+	/* background: var(--color-input-bg); */
 	flex-basis: 3rem;
 	aspect-ratio: 1;
 	border-radius: 50%;
@@ -259,15 +340,15 @@ main {
 	width: 9em;
 	height: 3rem;
 	max-width: 100%;
-	margin-top: 1.5rem;
+	margin-top: 0.7em;
 	border: 2px solid var(--color-border);
-	background: var(--color-background);
+	background: var(--color-input-bg);
 	color: var(--color-foreground);
 }
 
 .answer:focus-visible {
 	border-radius: 1px;
-	outline: 2px solid var(--color--accent);
+	outline: 2px solid var(--color-accent);
 	outline-offset: 2px;
 }
 
@@ -289,6 +370,12 @@ main {
 	max-width: 20em;
 	border: 1px solid var(--color-border);
 	padding: 1rem;
-	background: #111;
+	background: var(--color-modal-bg);
+	box-shadow: 0 4px 10px rgba(0, 0, 10, 0.5);
+}
+
+.prize {
+	font-size: 2rem;
+	padding: 0 0.4em;
 }
 </style>

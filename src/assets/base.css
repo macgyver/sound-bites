@@ -1,16 +1,20 @@
 :root {
-	--color-text: black;
-	--color-background: white;
-	--color-border: gray;
-	--color-accent: cyan;
+	--color-text: #111;
+	--color-background: #eee;
+	--color-modal-bg: #f0f0f0;
+	--color-input-bg: #fff;
+	--color-border: #666;
+	--color-accent: #00b7eb; /* printer's cyan */
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		--color-text: white;
-		--color-background: black;
-		--color-border: lightgray;
-		--color-accent: fuchsia;
+		--color-text: #eee;
+		--color-background: #111;
+		--color-modal-bg: #181818;
+		--color-input-bg: #000;
+		--color-border: #ccc;
+		--color-accent: #fd3f92; /* french fuchsia */
 	}
 }
 

@@ -34,9 +34,6 @@ npm run build
 npm run lint
 ```
 
-### todo
+### todo eventually
 
-- [ ] "delete" on the first letter of a blank word should delete last letter of previous word..
-- [ ] switching between days loses data
-- [ ] "you win" appears before last letter appears
-- [ ] final gloss input should be focused when all sound bites are filled
+- [ ] add sound files to correct words to clarify pronunciation
