@@ -72,7 +72,10 @@ let todaysGuesses = computed(() => guesses[activeDay.value - 1])
 let guessedBites = computed(() => {
 	return clues.value
 		.map(([, , bites], index) => {
-			if (todaysGuesses.value[index].join('') === answers.value[index])
+			if (
+				todaysGuesses.value[index].join('').toLowerCase() ===
+				answers.value[index].toLowerCase()
+			)
 				return todaysGuesses.value[index].slice(bites[0], bites[1]).join('')
 			else return new Array(bites[1] - bites[0]).fill(' ').join('')
 		})
