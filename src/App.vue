@@ -281,11 +281,14 @@ function go(day) {
 	</main>
 
 	<details class="instructions">
-		<summary>instructions</summary>
-		Each clue hints at a word. Fill in the blanks with the correct letters. The
-		circled letters in each correct word will move over to the final answer.
-		Sound out the circled letters as they are used in each word to reveal the
-		final answer.
+		<summary>Instructions</summary>
+		Each clue hints at a word. (If the clues prove too hard, try switching to
+		easy mode!) Fill in the blanks for these clue words with the correct
+		letters. The circled letters in each <em>correct</em> clue word will move
+		over to the final prompt. <em>Sound out</em> the circled letters as they are
+		used in each clue word to reveal the final answer. (Inspo:
+		<a href="https://en.wikipedia.org/wiki/Ghoti" target="_blank">ghoti</a> →
+		fish) )
 	</details>
 </template>
 

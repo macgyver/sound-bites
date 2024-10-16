@@ -1,19 +1,22 @@
 export const days = [
 	// day 1
 	[
-		[['folksy medicine accompaniment', 'coffee sweetener'], 'sugar', [0, 1]],
-		[['discreet', 'cautious'], 'careful', [5, 6]],
-		[['teach (or place to teach)', 'group of fish'], 'school', [1, 3]],
-		['ʃʊk', 'shook'],
-	],
-	// day 2
-	[
 		[['plot points', 'visualization of data'], 'graph', [3, 5]],
 		[['artist’s hot spot', 'potter’s need'], 'kiln', [2, 3]],
 		[['consider (as options)', 'take the measure of'], 'weigh', [1, 5]],
 		[['Ancient Greek drama critics?', 'group of singers'], 'chorus', [0, 2]],
 		['fleɪk', 'flake'],
 	],
+
+	// day 2
+	[
+		[['folksy medicine accompaniment', 'coffee sweetener'], 'sugar', [0, 1]],
+		[['discreet', 'cautious'], 'careful', [5, 6]],
+		[['teach (or place to teach)', 'group of fish'], 'school', [1, 3]],
+		['ʃʊk', 'shook'],
+	],
+
+	// day 3
 	[
 		[['one found in a garden', 'elf'], 'gnome', [0, 2]],
 		[['rage', 'fiesta'], 'party', [4, 5]],
@@ -21,13 +24,8 @@ export const days = [
 		[['medium, e.g.', 'scrutinize, with “up”'], 'size', [2, 3]],
 		['nidz', 'needs'],
 	],
-	[
-		[['delays (in video games?)', 'falls behind'], 'lags', [3, 4]],
-		[['killed the dragon', 'whole ton of'], 'slew', [2, 4]],
-		[['hitchhiked', 'flipped (as through a book)'], 'thumbed', [3, 5]],
-		['zum', 'zoom'],
-	],
 
+	// day 4
 	[
 		[['trench', 'slop container'], 'trough', [4, 6]],
 		[['animal with a sixth sense', 'baseball need'], 'bat', [1, 2]],
@@ -40,6 +38,14 @@ export const days = [
 			[9, 10],
 		],
 		['fæləsi', 'fallacy'],
+	],
+
+	// day 5
+	[
+		[['delays (in video games?)', 'falls behind'], 'lags', [3, 4]],
+		[['killed the dragon', 'whole ton of'], 'slew', [2, 4]],
+		[['hitchhiked', 'flipped (as through a book)'], 'thumbed', [3, 5]],
+		['zum', 'zoom'],
 	],
 	// the format:
 	// 	[
