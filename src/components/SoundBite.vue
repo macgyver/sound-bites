@@ -33,7 +33,7 @@ let props = defineProps({
 	},
 })
 
-let inert = computed(() => props.answer === props.guess.join(''))
+let solved = computed(() => props.answer === props.guess.join(''))
 
 let emit = defineEmits(['select-word', 'select-letter'])
 </script>
@@ -41,11 +41,11 @@ let emit = defineEmits(['select-word', 'select-letter'])
 <template>
 	<div
 		class="sound-bite"
-		:class="{ selected: selected && !inert }"
+		:class="{ selected: selected && !solved, solved }"
 		@click="emit('select-word')"
 		tabindex="0"
 		@focus="emit('select-word')"
-		:inert="inert"
+		:inert="solved"
 	>
 		<label class="clue">{{ clue }}</label>
 		<div class="answer">
@@ -56,6 +56,7 @@ let emit = defineEmits(['select-word', 'select-letter'])
 				:class="{
 					bite: index >= bites[0] && index < bites[1],
 					selected: selected && selectedLetterIndex === index,
+					last: index === answer.length - 1,
 				}"
 				@click="emit('select-letter', index)"
 				>{{ guess[index] }}</span
@@ -113,10 +114,19 @@ let emit = defineEmits(['select-word', 'select-letter'])
 	&.blank {
 		visibility: hidden;
 	}
+
+	.sound-bite.solved &.last {
+		&::before {
+			font-size: 0.8em;
+			content: '✔';
+			position: absolute;
+			left: calc(100% + 0.4em);
+		}
+	}
 }
 
 /* todo: fix this component encapsulation leak someday */
-.bites:not([inert]) .letter.selected {
+.bites:focus-within:not([inert]) .letter.selected {
 	outline: 2px solid var(--color-accent);
 	outline-offset: 2px;
 }
