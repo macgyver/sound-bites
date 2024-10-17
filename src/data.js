@@ -22,7 +22,7 @@ export const days = [
 		[['rage', 'fiesta'], 'party', [4, 5]],
 		[['involve in an affair?', 'interfere'], 'meddle', [2, 4]],
 		[['medium, e.g.', 'scrutinize, with “up”'], 'size', [2, 3]],
-		['nidz', 'needs'],
+		['nidz', 'needs', 'kneads'],
 	],
 
 	// day 4

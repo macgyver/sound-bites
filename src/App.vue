@@ -41,7 +41,12 @@ let today = computed(() => days[activeDay.value - 1])
 let clues = computed(() => today.value.slice(0, -1))
 
 let ipa = computed(() => today.value.at(-1)[0])
-let solution = computed(() => today.value.at(-1)[1])
+let solutions = computed(() =>
+	today.value
+		.at(-1)
+		.slice(1)
+		.map((s) => s.toLowerCase()),
+)
 
 let correctBites = computed(() =>
 	clues.value
@@ -163,8 +168,8 @@ watch(activeDay, function (newValue, oldValue) {
 	finalGuesses[oldValue - 1] = finalGuess.value // store the old value
 	finalGuess.value = finalGuesses[newValue - 1] // restore/reset the new one
 })
-let finalSolved = computed(
-	() => finalGuess.value.toLowerCase() === solution.value.toLowerCase(),
+let finalSolved = computed(() =>
+	solutions.value.includes(finalGuess.value.toLowerCase()),
 )
 console.debug('final guess initially is', finalGuesses[activeDay.value - 1])
 function checkAnswer() {
@@ -182,6 +187,7 @@ function goToDay(day) {
 	// todoo: could be a nice little improvement to go to the first blank letter  instead
 	selectedLetterIndex.value = 0
 	selectedWordIndex.value = 0
+	difficulty.value = 0 // reset to "hard" clues
 	bitesEl.value.focus()
 }
 
