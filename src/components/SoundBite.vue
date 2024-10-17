@@ -1,6 +1,6 @@
 <script setup>
 // todo: this component should be called "HookWord" and the SoundBite is the circled section
-import { defineProps, defineEmits, ref, reactive, watch } from 'vue'
+import { computed, defineProps, defineEmits, ref, reactive, watch } from 'vue'
 
 let props = defineProps({
 	clue: {
@@ -33,16 +33,19 @@ let props = defineProps({
 	},
 })
 
+let inert = computed(() => props.answer === props.guess.join(''))
+
 let emit = defineEmits(['select-word', 'select-letter'])
 </script>
 
 <template>
 	<div
 		class="sound-bite"
-		:class="{ selected }"
+		:class="{ selected: selected && !inert }"
 		@click="emit('select-word')"
 		tabindex="0"
 		@focus="emit('select-word')"
+		:inert="inert"
 	>
 		<label class="clue">{{ clue }}</label>
 		<div class="answer">

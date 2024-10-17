@@ -65,3 +65,7 @@ a {
 		text-decoration-thickness: 3px;
 	}
 }
+
+/* *:focus {
+	outline: 1px dotted red !important; */
+/* } */

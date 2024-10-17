@@ -37,5 +37,7 @@ npm run lint
 ### todo eventually
 
 - [ ] add sound files to correct words to clarify pronunciation
+- [ ] input on mobile devices is impossible
 - [x] go back to "hard" difficulty when switching days
 - [x] allow multiple possible correct solutions (needs / kneads)
+- [-] correctly filled words should be locked and not deletable

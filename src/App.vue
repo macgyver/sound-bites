@@ -94,9 +94,41 @@ let clueEls = ref([])
 let selectedWordIndex = ref(0)
 let selectedLetterIndex = ref(0)
 
-watch(selectedWordIndex, (index) => {
-	if (index < 0) selectedWordIndex.value = clues.value.length - 1
-	if (index >= clues.value.length) selectedWordIndex.value = 0
+function clampWordIndex(index) {
+	if (index < 0) return clues.value.length - 1
+	if (index >= clues.value.length) return 0
+	return index
+}
+// loop back to start or end of word if we go out of bounds
+watch(selectedWordIndex, (index, prevIndex) => {
+	// exit early if all clues are solved
+	console.debug('guessed bites', guessedBites.value, '==', correctBites.value)
+	if (guessedBites.value === correctBites.value) return
+
+	index = clampWordIndex(index)
+	// if (index < 0) index = clues.value.length - 1
+	// if (index >= clues.value.length) index = 0
+
+	console.debug(
+		'**next word',
+		prevIndex,
+		'->',
+		index,
+		answers.value[index],
+		'==',
+		todaysGuesses.value[index].join(''),
+	)
+
+	// skip over solved bites
+	let step = index > prevIndex ? 1 : -1
+	while (answers.value[index] === todaysGuesses.value[index].join('')) {
+		index = clampWordIndex(index + step)
+		console.debug('**trying new index', index, 'with step', step)
+	}
+	// ugh todo: still doesn't loop forwards with down arrow like it should but i cna't fix this right now
+	selectedWordIndex.value = index
+
+	// selected the first blank space in the word
 	selectedLetterIndex.value =
 		selectedGuess.value.findIndex((letter) => letter === ' ') || 0
 })
@@ -137,9 +169,10 @@ function handleDelete() {
 			selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
 			selectedLetterIndex.value -= 1
 		} else {
-			selectedWordIndex.value -= 1
-			selectedLetterIndex.value = -1
-			selectedGuess.value.splice(selectedLetterIndex.value, 1, ' ')
+			// do nothing for now - this used to jump to the previous word and delete there
+			// selectedWordIndex.value -= 1
+			// selectedLetterIndex.value = -1
+			// selectedGuess.value.splice(selectedLetterIndex.value, 1, ' ')
 		}
 	} else {
 		// else delete the current letter and stay where we are.
@@ -151,7 +184,8 @@ function handleDelete() {
 	}
 }
 
-function handleInput(e) {
+async function handleInput(e) {
+	console.debug('**handle input', e)
 	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
 	todaysGuesses.value[selectedWordIndex.value].splice(
 		selectedLetterIndex.value,
@@ -159,7 +193,23 @@ function handleInput(e) {
 		e.key,
 	)
 	selectedLetterIndex.value += 1
+	console.debug('**document active element after input', document.activeElement)
+	await nextTick()
+	console.debug(
+		'**document active element after next tick',
+		document.activeElement,
+	)
 }
+
+watch(selectedWordIndex, (swi) => {
+	console.debug('**re-focusing container after selected word change')
+	// clueEls[swi].value.focus()
+	document.querySelector(`.sound-bite:nth-child(${swi + 1}`).focus() // todo fix
+})
+
+setInterval(function () {
+	// console.debug('**document active element', document.activeElement)
+}, 1000)
 
 // this is a mess but it works
 let finalGuesses = days.map(() => '')
