@@ -11,7 +11,11 @@ export const days = [
 	// day 2
 	[
 		[['folksy medicine accompaniment', 'coffee sweetener'], 'sugar', [0, 1]],
-		[['discreet', 'cautious'], 'careful', [5, 6]],
+		[
+			['what you can’t have if you don’t eat your meat', 'tapioca, e.g'],
+			'pudding',
+			[5, 6],
+		],
 		[['teach (or place to teach)', 'group of fish'], 'school', [1, 3]],
 		['ʃʊk', 'shook'],
 	],

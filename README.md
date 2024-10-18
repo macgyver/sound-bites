@@ -41,3 +41,4 @@ npm run lint
 - [x] go back to "hard" difficulty when switching days
 - [x] allow multiple possible correct solutions (needs / kneads)
 - [-] correctly filled words should be locked and not deletable
+- [ ] only jump to next word if current word is correct
