@@ -14,7 +14,7 @@ export const days = [
 		[
 			['what you can’t have if you don’t eat your meat', 'tapioca, e.g'],
 			'pudding',
-			[5, 6],
+			[1, 2],
 		],
 		[['teach (or place to teach)', 'group of fish'], 'school', [1, 3]],
 		['ʃʊk', 'shook'],
