@@ -64,7 +64,7 @@ export const days = [
 				'controversial pizza topping',
 			],
 			'pineapple',
-			[0, 1],
+			[5, 7],
 		],
 		[['unwise', 'led astray'], 'misguided', [4, 6]],
 		['ɑkjupa͡ɪ', 'occupy'],
