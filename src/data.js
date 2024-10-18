@@ -66,7 +66,7 @@ export const days = [
 			'pineapple',
 			[5, 7],
 		],
-		[['unwise', 'led astray'], 'misguided', [4, 6]],
+		[['unwise (as behavior)', 'led astray'], 'misguided', [4, 6]],
 		['ɑkjupa͡ɪ', 'occupy'],
 	],
 
