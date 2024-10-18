@@ -51,6 +51,25 @@ export const days = [
 		[['hitchhiked', 'flipped (as through a book)'], 'thumbed', [3, 5]],
 		['zum', 'zoom'],
 	],
+	// day 6
+	[
+		[['consume (as Game of Thrones)', 'not look away from'], 'watch', [1, 2]],
+		[['showcase for Elphaba', 'naughty'], 'wicked', [2, 4]],
+
+		[['what you might say to a dress?', 'indicator of consent'], 'yes', [0, 1]],
+		[['annual shot', 'seat for a toddler'], 'booster', [1, 3]],
+		[
+			[
+				'fruit pollinated primarily by hummingbirds',
+				'controversial pizza topping',
+			],
+			'pineapple',
+			[0, 1],
+		],
+		[['unwise', 'led astray'], 'misguided', [4, 6]],
+		['ɑkjupa͡ɪ', 'occupy'],
+	],
+
 	// the format:
 	// 	[
 	// 		[['clue', 'easy clue'], 'hook', [sliceStartIndex, sliceIndexEnd]],
