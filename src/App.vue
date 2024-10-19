@@ -144,22 +144,13 @@ watch(guessedBites, (oldv, newv) => {
 })
 
 let selectedWord = computed(
-	() => clues.value[selectedWordIndex.value][ANSWER_INDEX],
+	() => clues.value[selectedWordIndex.value]?.[ANSWER_INDEX],
 )
 
 // loop back to start or end of word if we go out of bounds
 watch(selectedLetterIndex, (index, oldIndex) => {
-	if (index < 0) selectedLetterIndex.value = selectedWord.value.length - 1
-	if (index >= selectedWord.value.length) selectedLetterIndex.value = 0
-	if (
-		index === 0 &&
-		oldIndex !== 1 &&
-		!selectedGuess.value.some((char) => char === ' ')
-	) {
-		// let nextIncompleteWordIndex =
-		// todo: advance to the next blank space in the next word, if there is one, or to the final input if not
-		selectedWordIndex.value += 1
-	}
+	if (index < 0) selectedLetterIndex.value = selectedWord.value?.length - 1
+	if (index >= selectedWord.value?.length) selectedLetterIndex.value = 0
 })
 
 function handleDelete() {
@@ -186,25 +177,30 @@ function handleDelete() {
 
 async function handleInput(e) {
 	console.debug('**handle input', e)
+	// we saw "META" get entered one time in a single square, wtf is that
 	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
+
 	todaysGuesses.value[selectedWordIndex.value].splice(
 		selectedLetterIndex.value,
 		1,
 		e.key,
 	)
-	selectedLetterIndex.value += 1
+	// jump to the next letter in the word, if there is one
+	if (selectedLetterIndex.value !== selectedGuess.value.length - 1)
+		selectedLetterIndex.value += 1
+	// jump to the next word if the current word is now sovled
+	if (selectedWord.value === selectedGuess.value.join(''))
+		selectedWordIndex.value += 1
+
 	console.debug('**document active element after input', document.activeElement)
 	await nextTick()
-	console.debug(
-		'**document active element after next tick',
-		document.activeElement,
-	)
+	console.debug('**..doc active el after next tick', document.activeElement)
 }
 
 watch(selectedWordIndex, (swi) => {
-	console.debug('**re-focusing container after selected word change')
+	console.debug('**re-focusing container after selected word change', swi)
 	// clueEls[swi].value.focus()
-	document.querySelector(`.sound-bite:nth-child(${swi + 1}`).focus() // todo fix
+	document.querySelector(`.sound-bite:nth-child(${swi + 1}`)?.focus() // todo fix
 })
 
 setInterval(function () {
@@ -367,6 +363,7 @@ main {
 	flex-direction: column;
 	gap: 2.5em;
 	margin-top: 0.3em;
+	outline: none; /* remove the default focus outline, we'll focus individual letters inside3 */
 }
 
 .clue {

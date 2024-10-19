@@ -38,7 +38,9 @@ npm run lint
 
 - [ ] add sound files to correct words to clarify pronunciation
 - [ ] input on mobile devices is impossible
+- [ ] weird "META" input bug
 - [x] go back to "hard" difficulty when switching days
 - [x] allow multiple possible correct solutions (needs / kneads)
-- [-] correctly filled words should be locked and not deletable
-- [ ] only jump to next word if current word is correct
+- [x] correctly filled words should be locked and not deletable
+- [x] only jump to next word if current word is correct
+- [x] always jump to next word if current word is correct, even if selected letter is not the last one?
