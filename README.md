@@ -38,7 +38,7 @@ npm run lint
 
 - [ ] add sound files to correct words to clarify pronunciation
 - [ ] input on mobile devices is impossible
-- [ ] weird "META" input bug
+- [ ] weird "META" input bug - i reproduced in the mobile simular typing cmd-shift-r...
 - [x] go back to "hard" difficulty when switching days
 - [x] allow multiple possible correct solutions (needs / kneads)
 - [x] correctly filled words should be locked and not deletable

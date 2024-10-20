@@ -31,23 +31,34 @@ let props = defineProps({
 		type: Number,
 		required: true,
 	},
+	autofocus: {
+		type: Boolean,
+		default: false,
+	},
 })
 
-let solved = computed(() => props.answer === props.guess.join(''))
+let solved = computed(() => props.answer === props.guess.join('').toLowerCase())
 
 let emit = defineEmits(['select-word', 'select-letter'])
 </script>
 
 <template>
-	<div
+	<label
 		class="sound-bite"
 		:class="{ selected: selected && !solved, solved }"
 		@click="emit('select-word')"
-		tabindex="0"
 		@focus="emit('select-word')"
 		:inert="solved"
 	>
-		<label class="clue">{{ clue }}</label>
+		<input
+			class="hidden-input"
+			type="text"
+			tabindex="0"
+			:data-word="answer"
+			:data-guess="guess.join('')"
+			:autofocus
+		/>
+		<div class="clue">{{ clue }}</div>
 		<div class="answer">
 			<span
 				class="letter"
@@ -69,10 +80,20 @@ let emit = defineEmits(['select-word', 'select-letter'])
 			>
 			</span>
 		</div>
-	</div>
+	</label>
 </template>
 
 <style scoped>
+.hidden-input {
+	position: absolute;
+	clip: rect(1px, 1px, 1px, 1px);
+	clip-path: inset(50%);
+	height: 1px;
+	width: 1px;
+	overflow: hidden;
+	left: -100vh;
+}
+
 .sound-bite {
 	--girth: 2px;
 	font-size: min(10vw, 2rem);

@@ -91,8 +91,8 @@ let selectedGuess = computed(() => todaysGuesses.value[selectedWordIndex.value])
 
 let clueEls = ref([])
 
-let selectedWordIndex = ref(0)
-let selectedLetterIndex = ref(0)
+let selectedWordIndex = ref(null)
+let selectedLetterIndex = ref(null)
 
 function clampWordIndex(index) {
 	if (index < 0) return clues.value.length - 1
@@ -125,7 +125,7 @@ watch(selectedWordIndex, (index, prevIndex) => {
 		index = clampWordIndex(index + step)
 		console.debug('**trying new index', index, 'with step', step)
 	}
-	// ugh todo: still doesn't loop forwards with down arrow like it should but i cna't fix this right now
+	// bugh todo: still doesn't loop forwards correctly using the down arrow when any of the words are solved
 	selectedWordIndex.value = index
 
 	// selected the first blank space in the word
@@ -160,34 +160,37 @@ function handleDelete() {
 			selectedGuess.value.splice(selectedLetterIndex.value - 1, 1, ' ')
 			selectedLetterIndex.value -= 1
 		} else {
-			// do nothing for now - this used to jump to the previous word and delete there
+			// do nothing - this used to jump to the previous word and delete there but it confused people - you can still use up arrow, shift-tab, or just click to go back
 			// selectedWordIndex.value -= 1
 			// selectedLetterIndex.value = -1
 			// selectedGuess.value.splice(selectedLetterIndex.value, 1, ' ')
 		}
 	} else {
-		// else delete the current letter and stay where we are.
-		todaysGuesses.value[selectedWordIndex.value].splice(
-			selectedLetterIndex.value,
-			1,
-			' ',
-		)
+		// else delete the current letter and stay where we are - it's useful that you can modify the (reactive) result of a computed value like this
+		selectedGuess.value.splice(selectedLetterIndex.value, 1, ' ')
 	}
 }
 
 async function handleInput(e) {
 	console.debug('**handle input', e)
-	// we saw "META" get entered one time in a single square, wtf is that
-	if (e.keyCode < 65 || !/\p{L}/u.test(e.key)) return
-
-	todaysGuesses.value[selectedWordIndex.value].splice(
-		selectedLetterIndex.value,
-		1,
-		e.key,
+	if (
+		!selectedGuess.value || // we'll try to auto select the appropriate guess but in case it's missing..
+		//e.key === 'Meta' || // we saw "META" get entered one time in a single square, wtf is that
+		//e.keyCode < 65 || // ignore non-letter keys
+		!e.data || // ignore non-input here, e.g. backspace
+		!/\p{L}/u.test(e.data) // crazy unicode letter regex https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#loneproperty
 	)
+		return
+
+	selectedGuess.value.splice(
+		selectedLetterIndex.value,
+		e.data.length,
+		...e.data,
+	)
+
 	// jump to the next letter in the word, if there is one
 	if (selectedLetterIndex.value !== selectedGuess.value.length - 1)
-		selectedLetterIndex.value += 1
+		selectedLetterIndex.value += e.data.length
 	// jump to the next word if the current word is now sovled
 	if (selectedWord.value === selectedGuess.value.join(''))
 		selectedWordIndex.value += 1
@@ -200,12 +203,10 @@ async function handleInput(e) {
 watch(selectedWordIndex, (swi) => {
 	console.debug('**re-focusing container after selected word change', swi)
 	// clueEls[swi].value.focus()
-	document.querySelector(`.sound-bite:nth-child(${swi + 1}`)?.focus() // todo fix
+	document
+		.querySelector(`.sound-bite:nth-child(${swi + 1}) .hidden-input`)
+		?.focus() // todo fix this component encapsulation leak eventually
 })
-
-setInterval(function () {
-	// console.debug('**document active element', document.activeElement)
-}, 1000)
 
 // this is a mess but it works
 let finalGuesses = days.map(() => '')
@@ -245,11 +246,16 @@ function go(day) {
 	goToDay(day)
 	history.pushState({ day }, '', `?q=${day}`)
 }
+
+setInterval(() => {
+	// console.debug('**document active element', document.activeElement)
+}, 1000)
 </script>
 
 <template>
 	<header>
-		<h1 style="display: inline-block">Sound Bites</h1>
+		<h1>Sound Bites</h1>
+
 		<span class="days">
 			<a
 				v-for="(data, i) in days"
@@ -283,9 +289,8 @@ function go(day) {
 			@keyup.left="selectedLetterIndex -= 1"
 			@keyup.right="selectedLetterIndex += 1"
 			@keyup.delete="handleDelete"
-			@keyup="handleInput"
+			@input="handleInput"
 			:inert="guessedBites === correctBites"
-			autofocus
 			tabindex="0"
 			ref="bitesEl"
 		>
@@ -301,7 +306,7 @@ function go(day) {
 				:selected-letter-index="selectedLetterIndex"
 				@select-word="selectedWordIndex = index"
 				@select-letter="(index) => (selectedLetterIndex = index)"
-				autofocus="true"
+				:autofocus="index === 0"
 				:padding="longest"
 			/>
 		</div>
@@ -333,6 +338,7 @@ function go(day) {
 	</main>
 
 	<details class="instructions">
+		<!-- todo: this should probably be a dialog that is open the first time someone visits.. -->
 		<summary>Instructions</summary>
 		Each clue hints at a word. (If the clues prove too hard, try switching to
 		easy mode!) Fill in the blanks for these clue words with the correct
@@ -351,6 +357,12 @@ main {
 	flex-wrap: wrap;
 	gap: 5rem 2.5rem;
 }
+
+h1 {
+	display: inline-block;
+	margin-right: 0.7em;
+}
+
 .final {
 	margin-left: auto;
 	max-width: 100%;
@@ -412,14 +424,19 @@ main {
 }
 
 .days {
-	margin-left: 1em;
 	display: inline-flex;
-	gap: 1.2em;
+	flex-wrap: wrap;
+	gap: 0.5em 1.2em;
+
+	> a {
+		white-space: nowrap;
+	}
 }
 
 .difficulty {
 	display: flex;
 	gap: 1em;
+	margin-top: 1em;
 }
 
 .instructions {
